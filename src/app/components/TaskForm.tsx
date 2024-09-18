@@ -1,22 +1,24 @@
 import React, { useState } from "react";
+import { Task } from "../interfaces/Task";
 
 interface TaskFormProps {
   column: string;
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ column }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ column, setTasks }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/tasks", {
+    const res = await fetch("/api/tasks", {
       method: "POST",
       body: JSON.stringify({ title, description, status: column }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
+    const newTask = await res.json();
+    setTasks((prevTasks) => [...prevTasks, newTask]);
     setTitle("");
     setDescription("");
   };

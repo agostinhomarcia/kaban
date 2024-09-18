@@ -41,9 +41,6 @@ const NavBar = () => {
 
       {isOpen && (
         <div className="md:hidden mt-2 space-y-2">
-          <Link href="/" className="block text-gray-300 hover:text-white">
-            Home
-          </Link>
           <Link
             href="/dashboard"
             className="block text-gray-300 hover:text-white"
