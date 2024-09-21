@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Task } from "../interfaces/Task";
 
 interface TaskCardProps {
@@ -7,6 +7,10 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, setTasks }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(task.title);
+  const [editedDescription, setEditedDescription] = useState(task.description);
+
   const handleDelete = async () => {
     try {
       const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
@@ -20,6 +24,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, setTasks }) => {
   };
 
   const handleMove = async (newStatus: string) => {
+    console.log(`Movendo a tarefa para: ${newStatus}`);
     try {
       const res = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
@@ -42,58 +47,115 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, setTasks }) => {
     }
   };
 
+  const handleEdit = async () => {
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: editedTitle,
+          description: editedDescription,
+          status: task.status,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        const updatedTask = await res.json();
+        setTasks((prevTasks) =>
+          prevTasks.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+        );
+        setIsEditing(false);
+      } else {
+        throw new Error(`Failed to edit task: ${res.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error editing task:", error);
+    }
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-2">
-      <h3 className="font-bold">{task.title}</h3>
-      <p>{task.description}</p>
-      <p className="text-sm text-gray-500">
-        Created at: {new Date(task.createdAt).toLocaleDateString()}
-      </p>
-      <p className="text-sm text-gray-500">
-        Updated at: {new Date(task.updatedAt).toLocaleDateString()}
-      </p>
-
-      <div className="flex justify-between mt-2">
-        {task.status.toLowerCase() === "todo" && (
+      {isEditing ? (
+        <div>
+          <input
+            className="w-full border rounded p-2 mb-2"
+            type="text"
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+          />
+          <textarea
+            className="w-full border rounded p-2 mb-2"
+            value={editedDescription}
+            onChange={(e) => setEditedDescription(e.target.value)}
+          />
           <button
-            className="text-green-500"
-            onClick={() => handleMove("in progress")}
+            className="bg-green-500 text-white p-2 rounded"
+            onClick={handleEdit}
           >
-            Mover para &quot;In Progress&quot; →
+            Salvar
           </button>
-        )}
-        {task.status.toLowerCase() === "in progress" && (
-          <>
-            <button
-              className="text-yellow-500"
-              onClick={() => handleMove("todo")}
-            >
-              ← Mover para &quot;To Do&quot;
-            </button>
-            <button
-              className="text-green-500"
-              onClick={() => handleMove("done")}
-            >
-              Mover para &quot;Done&quot; →
-            </button>
-          </>
-        )}
-        {task.status.toLowerCase() === "done" && (
           <button
-            className="text-yellow-500"
-            onClick={() => handleMove("in progress")}
+            className="bg-gray-500 text-white p-2 rounded ml-2"
+            onClick={() => setIsEditing(false)}
           >
-            ← Mover para &quot;In Progress&quot;
+            Cancelar
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div>
+          <h3 className="font-bold">{task.title}</h3>
+          <p>{task.description}</p>
 
-      <div className="flex justify-between mt-2">
-        <button className="text-blue-500">Edit</button>
-        <button className="text-red-500" onClick={handleDelete}>
-          Delete
-        </button>
-      </div>
+          <div className="flex justify-between mt-2">
+            {task.status.toLowerCase() === "todo" && (
+              <button
+                className="text-green-500"
+                onClick={() => handleMove("in progress")}
+              >
+                Mover para &quot;In Progress&quot; →
+              </button>
+            )}
+            {task.status.toLowerCase() === "in progress" && (
+              <>
+                <button
+                  className="text-yellow-500"
+                  onClick={() => handleMove("todo")}
+                >
+                  ← Mover para &quot;To Do&quot;
+                </button>
+                <button
+                  className="text-green-500"
+                  onClick={() => handleMove("done")}
+                >
+                  Mover para &quot;Done&quot; →
+                </button>
+              </>
+            )}
+            {task.status.toLowerCase() === "done" && (
+              <button
+                className="text-yellow-500"
+                onClick={() => handleMove("in progress")}
+              >
+                ← Mover para &quot;In Progress&quot;
+              </button>
+            )}
+          </div>
+
+          <div className="flex justify-between mt-2">
+            <button
+              className="text-blue-500"
+              onClick={() => setIsEditing(true)}
+            >
+              Editar
+            </button>
+            <button className="text-red-500" onClick={handleDelete}>
+              Excluir
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

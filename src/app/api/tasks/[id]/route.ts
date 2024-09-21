@@ -1,28 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-  const { status } = await request.json();
-
-  try {
-    const updatedTask = await prisma.task.update({
-      where: { id: Number(id) },
-      data: { status },
-    });
-
-    return NextResponse.json(updatedTask);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "Erro ao atualizar a tarefa" },
-      { status: 500 }
-    );
-  }
-}
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -38,6 +16,32 @@ export async function DELETE(
   } catch {
     return NextResponse.json(
       { error: "Erro ao deletar a tarefa" },
+      { status: 500 }
+    );
+  }
+}
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+  const { title, description, status } = await request.json();
+
+  try {
+    const updatedTask = await prisma.task.update({
+      where: { id: Number(id) },
+      data: {
+        title,
+        description,
+        status,
+      },
+    });
+
+    return NextResponse.json(updatedTask);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Erro ao atualizar a tarefa" },
       { status: 500 }
     );
   }
