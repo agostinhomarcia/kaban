@@ -9,22 +9,41 @@ interface TaskFormProps {
 const TaskForm: React.FC<TaskFormProps> = ({ column, setTasks }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("/api/tasks", {
-      method: "POST",
-      body: JSON.stringify({ title, description, status: column }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const newTask = await res.json();
-    setTasks((prevTasks) => [...prevTasks, newTask]);
-    setTitle("");
-    setDescription("");
+
+    if (!title.trim() || !description.trim()) {
+      setError("Título e descrição são obrigatórios.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        body: JSON.stringify({ title, description, status: column }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to create task: ${res.statusText}`);
+      }
+
+      const newTask = await res.json();
+      setTasks((prevTasks) => [...prevTasks, newTask]);
+      setTitle("");
+      setDescription("");
+      setError("");
+    } catch (error) {
+      console.error("Error creating task:", error);
+      setError("Erro ao criar a task. Tente novamente.");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="my-2">
+      {error && <p className="text-red-500">{error}</p>}
       <input
         type="text"
         placeholder="Task Title"

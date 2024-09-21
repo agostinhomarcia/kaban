@@ -1,4 +1,3 @@
-// app/components/TaskCard.tsx
 import React from "react";
 import { Task } from "../interfaces/Task";
 
@@ -9,24 +8,37 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, setTasks }) => {
   const handleDelete = async () => {
-    await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
-    setTasks((prevTasks) => prevTasks.filter((t) => t.id !== task.id));
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error(`Failed to delete task: ${res.statusText}`);
+      }
+      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== task.id));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   const handleMove = async (newStatus: string) => {
-    const res = await fetch(`/api/tasks/${task.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: newStatus }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (res.ok) {
-      const updatedTask = await res.json();
-      setTasks((prevTasks) =>
-        prevTasks.map((t) => (t.id === updatedTask.id ? updatedTask : t))
-      );
+      if (res.ok) {
+        const updatedTask = await res.json();
+        setTasks((prevTasks) =>
+          prevTasks.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+        );
+      } else {
+        throw new Error(`Failed to move task: ${res.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error moving task:", error);
     }
   };
 
@@ -42,26 +54,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, setTasks }) => {
       </p>
 
       <div className="flex justify-between mt-2">
-        {/* Botão para mover a tarefa para trás */}
-        {task.status === "in progress" && (
-          <button
-            className="text-yellow-500"
-            onClick={() => handleMove("todo")}
-          >
-            ← Mover para &quot;To Do&quot;
-          </button>
-        )}
-        {task.status === "done" && (
-          <button
-            className="text-yellow-500"
-            onClick={() => handleMove("in progress")}
-          >
-            ← Mover para &quot;In Progress&quot;
-          </button>
-        )}
-
-        {/* Botão para mover a tarefa para frente */}
-        {task.status === "todo" && (
+        {task.status.toLowerCase() === "todo" && (
           <button
             className="text-green-500"
             onClick={() => handleMove("in progress")}
@@ -69,9 +62,28 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, setTasks }) => {
             Mover para &quot;In Progress&quot; →
           </button>
         )}
-        {task.status === "in progress" && (
-          <button className="text-green-500" onClick={() => handleMove("done")}>
-            Mover para &quot;Done&quot; →
+        {task.status.toLowerCase() === "in progress" && (
+          <>
+            <button
+              className="text-yellow-500"
+              onClick={() => handleMove("todo")}
+            >
+              ← Mover para &quot;To Do&quot;
+            </button>
+            <button
+              className="text-green-500"
+              onClick={() => handleMove("done")}
+            >
+              Mover para &quot;Done&quot; →
+            </button>
+          </>
+        )}
+        {task.status.toLowerCase() === "done" && (
+          <button
+            className="text-yellow-500"
+            onClick={() => handleMove("in progress")}
+          >
+            ← Mover para &quot;In Progress&quot;
           </button>
         )}
       </div>

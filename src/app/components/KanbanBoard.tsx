@@ -3,14 +3,21 @@ import React, { useState, useEffect } from "react";
 import Column from "./Column";
 import { Task } from "../interfaces/Task";
 
-const KanbanBoard = () => {
+const KanbanBoard: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const res = await fetch("/api/tasks");
-      const data = await res.json();
-      setTasks(data);
+      try {
+        const res = await fetch("/api/tasks");
+        if (!res.ok) {
+          throw new Error(`Erro na requisição: ${res.status}`);
+        }
+        const data = await res.json();
+        setTasks(data);
+      } catch (error) {
+        console.error("Erro ao buscar as tasks:", error);
+      }
     };
 
     fetchTasks();

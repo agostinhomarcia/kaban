@@ -3,7 +3,7 @@ import { Task } from "@prisma/client";
 import Link from "next/link";
 
 async function fetchTasks(): Promise<Task[]> {
-  const res = await fetch("http://localhost:3000/api/tasks", {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasks`, {
     cache: "no-store",
   });
   if (!res.ok) {
